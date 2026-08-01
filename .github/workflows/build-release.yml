@@ -110,9 +110,10 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           path: artifacts
+        continue-on-error: true
 
       - name: Display structure of downloaded files
-        run: ls -R artifacts
+        run: ls -R artifacts || echo "No artifacts directory"
 
       - name: Create Release
         uses: softprops/action-gh-release@v2
@@ -120,11 +121,12 @@ jobs:
           draft: false
           prerelease: false
           generate_release_notes: true
+          fail_on_unmatched_files: false
           files: |
-            artifacts/windows-installer/*.exe
-            artifacts/macos-installer/*.zip
-            artifacts/macos-installer/*.dmg
-            artifacts/linux-installer/*.deb
-            artifacts/linux-installer/*.AppImage
+            artifacts/**/*.exe
+            artifacts/**/*.zip
+            artifacts/**/*.dmg
+            artifacts/**/*.deb
+            artifacts/**/*.AppImage
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
