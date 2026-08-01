@@ -7,10 +7,6 @@ on:
       - master
     tags:
       - 'v*'
-  pull_request:
-    branches:
-      - main
-      - master
   workflow_dispatch:
 
 jobs:
@@ -21,7 +17,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [windows-latest, macos-latest, ubuntu-latest]
+        os: [windows-latest, ubuntu-latest]
 
     steps:
       - name: Checkout code
@@ -42,19 +38,6 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build macOS installer
-        if: matrix.os == 'macos-latest'
-        run: npm run dist:mac
-        continue-on-error: true
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          CSC_IDENTITY_AUTO_DISCOVERY: false
-          CSC_LINK: ""
-          CSC_KEY_PASSWORD: ""
-          APPLE_ID: ""
-          APPLE_APP_SPECIFIC_PASSWORD: ""
-          DEBUG: electron-builder
-
       - name: Build Linux installers
         if: matrix.os == 'ubuntu-latest'
         run: npm run dist:linux
@@ -62,71 +45,60 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Upload Windows artifacts
-        if: matrix.os == 'windows-latest' && success()
+        if: matrix.os == 'windows-latest'
         uses: actions/upload-artifact@v4
         with:
           name: windows-installer
-          path: |
-            release/*.exe
-          retention-days: 5
-          if-no-files-found: warn
-
-      - name: Upload macOS artifacts
-        if: matrix.os == 'macos-latest'
-        uses: actions/upload-artifact@v4
-        with:
-          name: macos-installer
-          path: |
-            release/*.zip
-            release/*.dmg
-          retention-days: 5
-          if-no-files-found: warn
+          path: release/*.exe
+          retention-days: 90
+          if-no-files-found: error
 
       - name: Upload Linux artifacts
-        if: matrix.os == 'ubuntu-latest' && success()
+        if: matrix.os == 'ubuntu-latest'
         uses: actions/upload-artifact@v4
         with:
           name: linux-installer
           path: |
             release/*.deb
             release/*.AppImage
-          retention-days: 5
-          if-no-files-found: warn
+          retention-days: 90
+          if-no-files-found: error
 
   release:
     name: Create Release
     needs: build
     runs-on: ubuntu-latest
-    if: startsWith(github.ref, 'refs/tags/v') && (success() || failure())
+    if: startsWith(github.ref, 'refs/tags/v')
 
     permissions:
       contents: write
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Download all artifacts
+      - name: Download Windows artifacts
         uses: actions/download-artifact@v4
         with:
-          path: artifacts
-        continue-on-error: true
+          name: windows-installer
+          path: release-artifacts
 
-      - name: Display structure of downloaded files
-        run: ls -R artifacts || echo "No artifacts directory"
+      - name: Download Linux artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: linux-installer
+          path: release-artifacts
 
-      - name: Create Release
+      - name: Display downloaded files
+        run: |
+          echo "Downloaded artifacts:"
+          ls -lah release-artifacts/
+          file release-artifacts/*
+
+      - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
           draft: false
           prerelease: false
           generate_release_notes: true
-          fail_on_unmatched_files: false
-          files: |
-            artifacts/**/*.exe
-            artifacts/**/*.zip
-            artifacts/**/*.dmg
-            artifacts/**/*.deb
-            artifacts/**/*.AppImage
+          fail_on_unmatched_files: true
+          files: release-artifacts/*
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
