@@ -66,12 +66,13 @@
       "category": "public.app-category.developer-tools",
       "target": [
         {
-          "target": "dmg",
-          "arch": ["x64", "arm64"]
+          "target": "zip",
+          "arch": ["x64"]
         }
       ],
       "hardenedRuntime": false,
-      "gatekeeperAssess": false
+      "gatekeeperAssess": false,
+      "identity": null
     },
     "dmg": {
       "icon": "build/icon.png",

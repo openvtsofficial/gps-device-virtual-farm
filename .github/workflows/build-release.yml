@@ -45,6 +45,7 @@ jobs:
       - name: Build macOS installer
         if: matrix.os == 'macos-latest'
         run: npm run dist:mac
+        continue-on-error: true
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           CSC_IDENTITY_AUTO_DISCOVERY: false
@@ -52,6 +53,7 @@ jobs:
           CSC_KEY_PASSWORD: ""
           APPLE_ID: ""
           APPLE_APP_SPECIFIC_PASSWORD: ""
+          DEBUG: electron-builder
 
       - name: Build Linux installers
         if: matrix.os == 'ubuntu-latest'
@@ -70,11 +72,12 @@ jobs:
           if-no-files-found: warn
 
       - name: Upload macOS artifacts
-        if: matrix.os == 'macos-latest' && success()
+        if: matrix.os == 'macos-latest'
         uses: actions/upload-artifact@v4
         with:
           name: macos-installer
           path: |
+            release/*.zip
             release/*.dmg
           retention-days: 5
           if-no-files-found: warn
@@ -119,6 +122,7 @@ jobs:
           generate_release_notes: true
           files: |
             artifacts/windows-installer/*.exe
+            artifacts/macos-installer/*.zip
             artifacts/macos-installer/*.dmg
             artifacts/linux-installer/*.deb
             artifacts/linux-installer/*.AppImage
