@@ -1,0 +1,262 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data: file:; connect-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'">
+    <title>GPS Device Farm</title>
+    <link rel="stylesheet" href="styles.css">
+  </head>
+  <body>
+    <header class="titlebar">
+      <div class="brand-lockup">
+        <img src="icon.png" alt="Open VTS" class="brand-icon">
+        <span>GPS Device Farm</span>
+        <span class="protocol-tag">GT06</span>
+      </div>
+      <div class="titlebar-actions">
+        <button id="settingsButton" class="window-button settings-button" type="button" aria-label="Open settings" title="Settings">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 8.25A3.75 3.75 0 1 0 12 15.75 3.75 3.75 0 0 0 12 8.25Zm8.1 4.84-1.74-1.01c.04-.36.04-.72 0-1.08l1.74-1.01-1.75-3.03-1.74 1.01a7.08 7.08 0 0 0-.94-.54V5.4h-3.5v2.02c-.33.15-.65.34-.94.54L9.49 6.96 7.74 9.99 9.48 11c-.04.36-.04.72 0 1.08l-1.74 1.01 1.75 3.03 1.74-1.01c.29.21.61.39.94.54v2.02h3.5v-2.02c.33-.15.65-.33.94-.54l1.74 1.01 1.75-3.03Z"></path></svg>
+        </button>
+        <span class="titlebar-divider"></span>
+        <button id="minimizeButton" class="window-button" type="button" aria-label="Minimize window" title="Minimize">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"></path></svg>
+        </button>
+        <button id="maximizeButton" class="window-button" type="button" aria-label="Maximize window" title="Maximize">
+          <svg id="maximizeIcon" viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="6" width="12" height="12" rx="1"></rect></svg>
+        </button>
+        <button id="closeButton" class="window-button close-button" type="button" aria-label="Close window" title="Close">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m7 7 10 10M17 7 7 17"></path></svg>
+        </button>
+      </div>
+    </header>
+
+    <main class="app-content">
+      <section class="hero-section" aria-labelledby="pageTitle">
+        <div>
+          <div class="eyebrow">VIRTUAL GPS DEVICE ENVIRONMENT</div>
+          <h1 id="pageTitle">Load-test your GPS platform before real devices arrive.</h1>
+          <p>Open real TCP connections, complete GT06 login handshakes, and transmit continuous, coherent vehicle data.</p>
+        </div>
+        <div id="runtimeStatus" class="runtime-status idle" aria-live="polite">
+          <span class="status-dot"></span>
+          <span id="runtimeStatusText">Ready</span>
+        </div>
+      </section>
+
+      <section class="workspace-grid">
+        <article class="panel control-panel">
+          <div class="panel-heading">
+            <div>
+              <span class="section-kicker">LOAD PROFILE</span>
+              <h2>Virtual devices</h2>
+            </div>
+            <button id="exportButton" class="text-button" type="button">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12m0 0 4-4m-4 4-4-4M5 19h14"></path></svg>
+              Export IMEIs
+            </button>
+          </div>
+
+          <label class="field-label" for="deviceCount">Number of GPS devices</label>
+          <div class="device-input-wrap">
+            <input id="deviceCount" type="number" min="1" max="50000" step="1" value="100" inputmode="numeric" aria-describedby="deviceHint">
+            <span>devices</span>
+          </div>
+          <p id="deviceHint" class="field-hint">Supports 1–50,000 devices. Increase load gradually.</p>
+
+          <div class="composition">
+            <div class="composition-track" aria-hidden="true">
+              <span class="moving-segment"></span>
+              <span class="parked-segment"></span>
+            </div>
+            <div class="composition-legend">
+              <div>
+                <span class="legend-dot moving"></span>
+                <span>Moving</span>
+                <strong id="movingCount">25</strong>
+                <small>10 sec</small>
+              </div>
+              <div>
+                <span class="legend-dot parked"></span>
+                <span>Parked</span>
+                <strong id="parkedCount">75</strong>
+                <small>5 min</small>
+              </div>
+            </div>
+          </div>
+
+          <div class="target-row">
+            <div>
+              <span class="target-label">TRANSMISSION TARGET</span>
+              <strong id="targetValue">127.0.0.1:5023</strong>
+            </div>
+            <button id="editTargetButton" class="icon-link" type="button" aria-label="Edit target" title="Edit target">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m14.5 5.5 4 4M4 20l3.5-.75L19 7.75 16.25 5 4.75 16.5 4 20Z"></path></svg>
+            </button>
+          </div>
+
+          <div class="primary-actions">
+            <button id="startButton" class="primary-button" type="button">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 6 9 6-9 6V6Z"></path></svg>
+              <span>Start transmission</span>
+            </button>
+            <button id="stopButton" class="stop-button" type="button" disabled>
+              <span class="stop-square"></span>
+              Stop
+            </button>
+          </div>
+
+          <div class="authorization-note">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 4.5 6v5.25c0 4.58 3.2 8.86 7.5 9.75 4.3-.89 7.5-5.17 7.5-9.75V6L12 3Z"></path><path d="m9 12 2 2 4-4"></path></svg>
+            <span>Use only against infrastructure you own or are authorized to test.</span>
+          </div>
+        </article>
+
+        <section class="metrics-area" aria-label="Live metrics">
+          <div class="metrics-grid">
+            <article class="metric-card primary-metric">
+              <div class="metric-label"><span>Online</span><span class="metric-live-dot"></span></div>
+              <div class="metric-value"><strong id="onlineMetric">0</strong><span id="onlineTotal">/ 100</span></div>
+              <div class="progress-track"><span id="onlineProgress"></span></div>
+              <small id="onlinePercent">0% login acknowledged</small>
+            </article>
+            <article class="metric-card">
+              <div class="metric-label">TCP connected</div>
+              <strong id="connectedMetric">0</strong>
+              <small id="connectionSubtext">No active sockets</small>
+            </article>
+            <article class="metric-card">
+              <div class="metric-label">Packets / sec</div>
+              <strong id="packetRateMetric">0</strong>
+              <small id="packetTotalMetric">0 packets sent</small>
+            </article>
+            <article class="metric-card">
+              <div class="metric-label">Transmit rate</div>
+              <strong id="bandwidthMetric">0 B/s</strong>
+              <small id="bytesTotalMetric">0 B total</small>
+            </article>
+            <article class="metric-card">
+              <div class="metric-label">Reconnects</div>
+              <strong id="reconnectMetric">0</strong>
+              <small id="backoffMetric">0 waiting</small>
+            </article>
+            <article class="metric-card error-card">
+              <div class="metric-label">Errors</div>
+              <strong id="errorMetric">0</strong>
+              <small id="malformedMetric">0 malformed frames</small>
+            </article>
+          </div>
+
+          <article class="session-panel">
+            <div class="session-heading">
+              <div>
+                <span class="section-kicker">SESSION</span>
+                <strong id="elapsedMetric">00:00:00</strong>
+              </div>
+              <div class="session-resource">
+                <span>Worker memory</span>
+                <strong id="memoryMetric">0 MB</strong>
+              </div>
+            </div>
+            <div class="packet-breakdown">
+              <div><span>Login</span><strong id="loginMetric">0</strong></div>
+              <div><span>Location</span><strong id="locationMetric">0</strong></div>
+              <div><span>Heartbeat</span><strong id="heartbeatMetric">0</strong></div>
+              <div><span>ACK</span><strong id="ackMetric">0</strong></div>
+            </div>
+          </article>
+        </section>
+      </section>
+
+      <section id="terminalPanel" class="terminal-panel">
+        <div class="terminal-toolbar">
+          <div class="terminal-title">
+            <span class="terminal-lights"><i></i><i></i><i></i></span>
+            <strong>Process terminal</strong>
+            <span id="terminalLineCount">0 lines</span>
+          </div>
+          <div class="terminal-actions">
+            <button id="openLogButton" type="button">Open log file</button>
+            <button id="clearTerminalButton" type="button">Clear</button>
+            <button id="expandTerminalButton" class="terminal-icon-button" type="button" aria-label="Expand terminal" title="Expand terminal">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 3H3v5M16 3h5v5M8 21H3v-5M16 21h5v-5"></path></svg>
+            </button>
+            <button id="collapseTerminalButton" class="terminal-icon-button" type="button" aria-label="Collapse terminal" title="Collapse terminal">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m7 10 5 5 5-5"></path></svg>
+            </button>
+          </div>
+        </div>
+        <div id="terminalOutput" class="terminal-output" role="log" aria-live="polite" aria-label="Simulation logs">
+          <div class="terminal-empty">Start a transmission to see GT06 connection and packet events.</div>
+        </div>
+      </section>
+
+      <footer class="app-footer">
+        <span>GPS Device Farm <span id="appVersion">v1.0.0</span></span>
+        <span>Powered by <a href="https://openvts.io" target="_blank" rel="noopener noreferrer">Open VTS</a></span>
+      </footer>
+    </main>
+
+    <div id="settingsModal" class="modal-backdrop" hidden>
+      <section class="settings-modal" role="dialog" aria-modal="true" aria-labelledby="settingsTitle">
+        <div class="modal-heading">
+          <div>
+            <span class="section-kicker">CONFIGURATION</span>
+            <h2 id="settingsTitle">Transmission settings</h2>
+          </div>
+          <button id="closeSettingsButton" class="modal-close" type="button" aria-label="Close settings">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m7 7 10 10M17 7 7 17"></path></svg>
+          </button>
+        </div>
+
+        <form id="settingsForm">
+          <div class="form-grid target-grid">
+            <label>
+              <span>Destination IP or hostname</span>
+              <input id="hostInput" type="text" maxlength="253" autocomplete="off" spellcheck="false" required>
+            </label>
+            <label>
+              <span>GT06 TCP port</span>
+              <input id="portInput" type="number" min="1" max="65535" required>
+            </label>
+          </div>
+          <div class="form-divider"></div>
+          <div class="form-grid">
+            <label>
+              <span>Base latitude</span>
+              <input id="latitudeInput" type="number" min="-90" max="90" step="0.000001" required>
+            </label>
+            <label>
+              <span>Base longitude</span>
+              <input id="longitudeInput" type="number" min="-180" max="180" step="0.000001" required>
+            </label>
+          </div>
+          <p class="form-help">Devices are distributed around this point and moving devices follow continuous synthetic routes.</p>
+          <div class="form-divider"></div>
+          <div class="form-grid">
+            <label>
+              <span>Connection ramp / second</span>
+              <input id="connectionRateInput" type="number" min="1" max="2000" step="1" required>
+            </label>
+            <label>
+              <span>Log detail</span>
+              <select id="logDetailInput">
+                <option value="summary">Summary (recommended)</option>
+                <option value="detailed">Detailed device events</option>
+              </select>
+            </label>
+          </div>
+          <p class="form-help">A controlled ramp prevents a connection storm from hiding the target system's steady-state performance.</p>
+          <div class="modal-actions">
+            <button id="cancelSettingsButton" class="secondary-button" type="button">Cancel</button>
+            <button class="save-button" type="submit">Save settings</button>
+          </div>
+        </form>
+      </section>
+    </div>
+
+    <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+    <script src="app.js"></script>
+  </body>
+</html>
+

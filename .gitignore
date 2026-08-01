@@ -1,0 +1,12 @@
+node_modules/
+.npm-cache/
+.electron-cache/
+.cache/
+.home/
+.runtime/
+qa-*.png
+release/
+coverage/
+*.log
+.DS_Store
+Thumbs.db
