@@ -96,45 +96,99 @@ jobs:
     name: Create Release
     needs: build
     runs-on: ubuntu-latest
-    if: github.event.inputs.create_release == 'true' && github.event.inputs.tag_name != ''
+    if: |
+      (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master') ||
+      (github.event.inputs.create_release == 'true' && github.event.inputs.tag_name != '')
 
     permissions:
       contents: write
 
     steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Get version from package.json
+        id: get_version
+        run: |
+          if [ -n "${{ github.event.inputs.tag_name }}" ]; then
+            # Manual trigger - use provided tag
+            echo "version=${{ github.event.inputs.tag_name }}" >> $GITHUB_OUTPUT
+            echo "Version (manual): ${{ github.event.inputs.tag_name }}"
+          else
+            # Automatic trigger - use package.json version
+            VERSION=$(node -p "require('./package.json').version")
+            echo "version=v${VERSION}" >> $GITHUB_OUTPUT
+            echo "Version (auto): v${VERSION}"
+          fi
+
+      - name: Check if release exists
+        id: check_release
+        run: |
+          if gh release view "${{ steps.get_version.outputs.version }}" >/dev/null 2>&1; then
+            echo "exists=true" >> $GITHUB_OUTPUT
+            echo "Release ${{ steps.get_version.outputs.version }} already exists, skipping..."
+          else
+            echo "exists=false" >> $GITHUB_OUTPUT
+            echo "Release ${{ steps.get_version.outputs.version }} does not exist, will create..."
+          fi
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Download Windows artifacts
+        if: steps.check_release.outputs.exists == 'false'
         uses: actions/download-artifact@v4
         with:
           name: windows-installer
           path: release-artifacts
 
       - name: Download Linux artifacts
+        if: steps.check_release.outputs.exists == 'false'
         uses: actions/download-artifact@v4
         with:
           name: linux-installer
           path: release-artifacts
 
       - name: Download macOS artifacts
+        if: steps.check_release.outputs.exists == 'false'
         uses: actions/download-artifact@v4
         with:
           name: macos-installer
           path: release-artifacts
 
       - name: Display downloaded files
+        if: steps.check_release.outputs.exists == 'false'
         run: |
           echo "Downloaded artifacts:"
           ls -lah release-artifacts/
           file release-artifacts/* || true
 
       - name: Create GitHub Release
+        if: steps.check_release.outputs.exists == 'false'
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ github.event.inputs.tag_name }}
-          name: ${{ github.event.inputs.tag_name }}
+          tag_name: ${{ steps.get_version.outputs.version }}
+          name: Release ${{ steps.get_version.outputs.version }}
           draft: false
           prerelease: false
           generate_release_notes: true
           fail_on_unmatched_files: false
           files: release-artifacts/*
+          body: |
+            ## 📦 Installation
+
+            Download the installer for your operating system:
+
+            - **Windows**: `GPS-Device-Farm-Setup-*.exe` - Run the installer
+            - **Linux**:
+              - Debian/Ubuntu: `*.deb` - Install with `sudo dpkg -i filename.deb`
+              - AppImage: `*.AppImage` - Make executable and run
+            - **macOS**: `*.zip` - Extract and move to Applications folder
+
+            ## ⚠️ macOS Security Note
+            This is an unsigned application. On first launch:
+            1. Right-click the app and select "Open"
+            2. Click "Open" in the security dialog
+
+            Or run in terminal: `xattr -cr /path/to/GPS\ Device\ Farm.app`
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
