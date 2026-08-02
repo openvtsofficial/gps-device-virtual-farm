@@ -40,6 +40,13 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Prepare macOS icon
+        if: matrix.os == 'macos-latest'
+        run: |
+          npm install --no-save sharp
+          node -e "const sharp = require('sharp'); sharp('build/icon.png').resize(512, 512, {fit: 'contain', background: {r: 0, g: 0, b: 0, alpha: 0}}).png().toFile('build/icon-512x512.png').then(() => console.log('Icon resized to 512x512')).catch(err => {console.error(err); process.exit(1);});"
+          ls -lh build/icon*.png
+
       - name: Build Windows installer
         if: matrix.os == 'windows-latest'
         run: npm run dist:win
