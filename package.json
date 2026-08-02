@@ -17,9 +17,9 @@
     "pack": "electron-builder --dir",
     "pack:win": "electron-builder --win dir",
     "dist:win": "electron-builder --win nsis",
-    "dist:mac": "electron-builder --mac dmg",
+    "dist:mac": "electron-builder --mac zip",
     "dist:linux": "electron-builder --linux deb AppImage",
-    "dist:all": "electron-builder --win nsis --mac dmg --linux deb AppImage"
+    "dist:all": "electron-builder --win nsis --mac zip --linux deb AppImage"
   },
   "devDependencies": {
     "electron": "^43.1.0",
@@ -73,28 +73,6 @@
       "hardenedRuntime": false,
       "gatekeeperAssess": false,
       "identity": null
-    },
-    "dmg": {
-      "icon": "build/icon.png",
-      "iconSize": 100,
-      "contents": [
-        {
-          "x": 410,
-          "y": 150,
-          "type": "link",
-          "path": "/Applications"
-        },
-        {
-          "x": 130,
-          "y": 150,
-          "type": "file"
-        }
-      ],
-      "background": null,
-      "window": {
-        "width": 540,
-        "height": 380
-      }
     },
     "linux": {
       "icon": "build/icon.png",
