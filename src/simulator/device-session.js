@@ -1,6 +1,7 @@
 'use strict';
 
 const net = require('node:net');
+const { performance } = require('node:perf_hooks');
 const {
   FrameDecoder,
   buildCommandResponse,
@@ -21,7 +22,7 @@ const SessionState = Object.freeze({
 });
 
 class DeviceSession {
-  constructor({ index, total, imei, moving, farm, netModule = net }) {
+  constructor({ index, total, imei, moving, farm, netModule = net, movementModel = null }) {
     this.index = index;
     this.imei = imei;
     this.moving = moving;
@@ -45,7 +46,7 @@ class DeviceSession {
     this.backpressured = false;
     this.disposed = false;
     this.hash = fnv1a(imei);
-    this.route = new RouteModel({
+    this.route = movementModel || new RouteModel({
       index,
       total,
       imei,
@@ -93,6 +94,7 @@ class DeviceSession {
 
   dispose() {
     if (this.disposed) return;
+    this.route.onTransportUnavailable?.();
     this.disposed = true;
     this.scheduleVersion += 1;
     this.#destroySocket();
@@ -157,14 +159,24 @@ class DeviceSession {
 
     if (now >= this.nextHeartbeatAt) {
       const heartbeat = buildHeartbeat(this.#nextSerial(), this.moving);
-      this.#writePacket('heartbeat', heartbeat);
+      if (!this.#writePacket('heartbeat', heartbeat)) return;
       this.nextHeartbeatAt = now + this.config.heartbeatIntervalMs;
     }
 
     if (now >= this.nextLocationAt) {
-      const point = this.route.nextPoint(now);
-      const location = buildLocation(this.#nextSerial(), point);
-      this.#writePacket('location', location);
+      if (typeof this.route.proposePoint === 'function') {
+        const proposal = this.route.proposePoint(now, performance.now());
+        const location = buildLocation(this.#nextSerial(), proposal.gpsPoint);
+        if (this.#writePacket('location', location)) {
+          // A false return from socket.write means queued under backpressure;
+          // only an exception or missing socket prevents this commit.
+          this.route.commitQueuedPoint(proposal.nextStateToken);
+        } else return;
+      } else {
+        const point = this.route.nextPoint(now);
+        const location = buildLocation(this.#nextSerial(), point);
+        if (!this.#writePacket('location', location)) return;
+      }
       this.nextLocationAt = now + (
         this.moving ? this.config.movingIntervalMs : this.config.parkedIntervalMs
       );
@@ -223,6 +235,7 @@ class DeviceSession {
     this.reconnectAttempt = 0;
     this.#setState(SessionState.ONLINE);
     this.farm.logDevice(this, 'info', 'GT06 login acknowledged; device online');
+    this.route.onTransportAvailable?.(performance.now());
     this.nextHeartbeatAt = now;
     this.nextLocationAt = now;
     this.#sendOnlinePackets(now);
@@ -270,6 +283,7 @@ class DeviceSession {
 
   #beginReconnect(now, reason) {
     if (this.disposed || !this.farm.running || this.state === SessionState.STOPPED) return;
+    this.route.onTransportUnavailable?.();
     this.#destroySocket();
     this.#setState(SessionState.BACKOFF);
 

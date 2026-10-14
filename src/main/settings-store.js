@@ -35,7 +35,7 @@ class SettingsStore {
   }
 
   get() {
-    return { ...this.settings };
+    return structuredClone(this.settings);
   }
 
   async save(input) {
@@ -46,7 +46,7 @@ class SettingsStore {
     }));
     await this.#write(validated);
     this.settings = validated;
-    return { ...this.settings };
+    return structuredClone(this.settings);
   }
 
   async #write(settings) {
@@ -69,7 +69,10 @@ function pickSettings(input = {}) {
     ...(input.connectionRatePerSecond !== undefined
       ? { connectionRatePerSecond: input.connectionRatePerSecond }
       : {}),
-    ...(input.logDetail !== undefined ? { logDetail: input.logDetail } : {})
+    ...(input.logDetail !== undefined ? { logDetail: input.logDetail } : {}),
+    ...(input.movementMode !== undefined ? { movementMode: input.movementMode } : {}),
+    ...(input.scenarioSeed !== undefined ? { scenarioSeed: input.scenarioSeed } : {}),
+    ...(input.road !== undefined ? { road: input.road } : {})
   };
 }
 

@@ -226,6 +226,68 @@ button:disabled { cursor: not-allowed; opacity: .5; }
 .form-help { margin: 7px 0 0; color: var(--subtle); font-size: 11px; line-height: 1.45; }
 
 .composition { margin: 20px 0; }
+.road-inline-status { display: flex; align-items: center; flex-wrap: wrap; gap: 7px; margin: -5px 0 14px; color: var(--muted); font-size: 11px; }
+.road-inline-status .text-button { padding: 0 3px; font-size: 11px; }
+.road-inline-status .field-hint { flex-basis: 100%; margin: 0; }
+.road-inline-dot { width: 6px; height: 6px; border-radius: 50%; background: #9aa0aa; }
+.road-inline-status.ready { color: #08774a; }
+.road-inline-status.ready .road-inline-dot { background: var(--success); }
+.road-inline-status.blocked { color: #8e5b18; }
+.road-inline-status.blocked .road-inline-dot { background: var(--warning); }
+.road-inline-status.preparing .road-inline-dot { background: var(--accent); animation: pulse 1s infinite; }
+.road-preparation-panel { margin: -3px 0 17px; padding: 13px; border: 1px solid #dbe4f3; border-radius: 10px; background: #f8faff; font-size: 12px; }
+.road-preparation-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 9px; }
+.road-preparation-heading h3 { margin: 3px 0 0; font-size: 14px; line-height: 1.2; letter-spacing: -.015em; }
+.road-preparation-badge { flex: none; padding: 4px 7px; border-radius: 5px; background: #e9edf3; color: #525d6c; font-size: 11px; font-weight: 700; }
+.road-preparation-panel[data-state="running"] .road-preparation-badge { color: #2358b5; background: #e2ecff; }
+.road-preparation-panel[data-state="ready"] .road-preparation-badge { color: #08774a; background: #dff5e9; }
+.road-preparation-panel[data-state="blocked"] .road-preparation-badge,
+.road-preparation-panel[data-state="interrupted"] .road-preparation-badge { color: #8e5b18; background: #fff0d1; }
+.road-preparation-panel[data-state="failed"] .road-preparation-badge { color: #a62b2b; background: #ffe8e8; }
+.road-preparation-steps { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; list-style: none; padding: 0; margin: 12px 0; }
+.road-preparation-steps li { min-width: 0; padding: 6px 5px; border: 1px solid #e0e5ed; border-radius: 6px; background: #fff; color: #79818d; text-align: center; font-size: 11px; line-height: 1.25; }
+.road-preparation-steps li[data-state="active"] { border-color: #9cbbf9; background: #eaf1ff; color: #245bc5; font-weight: 700; }
+.road-preparation-steps li[data-state="done"] { border-color: #c3e9d5; background: #edf9f2; color: #08774a; }
+.road-preparation-detail { margin: 0 0 12px; min-height: 16px; color: #3b4656; font-size: 12px; line-height: 1.4; overflow-wrap: anywhere; }
+.road-stage-progress { margin: 0 0 12px; }
+.road-progress-label { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; margin-bottom: 6px; color: #667080; font-size: 11px; }
+.road-progress-label strong { color: #222b37; font-size: 12px; }
+.road-progress-track { height: 8px; overflow: hidden; border-radius: 99px; background: #e3e8f1; }
+.road-progress-track > span { display: block; height: 100%; width: 0; border-radius: inherit; background: var(--accent); transition: width .3s ease; }
+.road-stage-progress[data-indeterminate="true"] .road-progress-track > span { width: 35%; animation: road-progress-sweep 1.8s ease-in-out infinite; }
+.road-route-percent { display: block; margin-top: 5px; color: #7b8490; font-size: 11px; }
+.road-fleet-readiness { margin: 10px 0 0; padding: 9px 10px; border: 1px solid #dce5f4; border-radius: 7px; background: #fff; color: #47566b; font-size: 11px; line-height: 1.45; }
+.road-fleet-readiness[data-state="ready"] { border-color: #bfe4cd; background: #f0faf4; color: #08774a; font-weight: 650; }
+.road-preparation-metrics { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 7px; margin-top: 11px; }
+.road-preparation-metrics > div { min-width: 0; padding: 7px 8px; border: 1px solid #e5eaf1; border-radius: 6px; background: #fff; }
+.road-preparation-metrics span { display: block; color: #78818e; font-size: 10px; line-height: 1.2; }
+.road-preparation-metrics strong { display: block; margin-top: 3px; color: #222b37; font-size: 13px; }
+.road-preparation-search { margin: 8px 0 0; color: #6e7886; line-height: 1.35; }
+.road-preparation-mix { margin: 9px 0 0; color: #667080; line-height: 1.4; }
+.road-preparation-eta { margin: 10px 0 0; color: #3d506d; line-height: 1.4; }
+.road-preparation-advice { margin: 9px 0 0; padding: 8px 9px; border: 1px solid #efd7a7; border-radius: 6px; background: #fffaef; color: #704d1e; line-height: 1.45; overflow-wrap: anywhere; }
+.road-preparation-panel[data-state="failed"] .road-preparation-advice { border-color: #f1c5c5; background: #fff5f5; color: #9a3030; }
+.road-preparation-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 9px; margin-top: 11px; color: #7b8490; font-size: 11px; line-height: 1.35; }
+.road-preparation-actions .secondary-button { flex: none; height: 30px; padding: 0 8px; font-size: 11px; }
+.road-preparation-actions #useSavedRoutesButton { border-color: #b9d0fc; color: #245bc5; background: #eef4ff; }
+@keyframes road-progress-sweep { from { transform: translateX(-110%); } to { transform: translateX(310%); } }
+@media (prefers-reduced-motion: reduce) {
+  .road-stage-progress[data-indeterminate="true"] .road-progress-track > span { animation: none; }
+}
+.road-maintenance { margin-top: 14px; border: 1px solid var(--line); border-radius: 9px; overflow: hidden; }
+.road-maintenance summary { padding: 11px 13px; color: #505762; cursor: pointer; font-size: 11px; font-weight: 650; }
+.road-maintenance summary:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+.road-controls { padding: 13px; border-top: 1px solid var(--line); background: #f9fafb; }
+.road-heading, .road-actions { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.road-heading { font-size: 12px; }
+.road-heading span { color: var(--muted); font-size: 11px; }
+.road-controls select { width: 100%; min-height: 72px; margin-top: 4px; padding: 5px; border: 1px solid #ccd1d9; border-radius: 8px; background: #fff; color: var(--ink); font-size: 11px; }
+.road-setup-help { margin: 8px 0 0; color: #505762; font-size: 11px; line-height: 1.45; }
+.road-actions { justify-content: flex-start; margin-top: 9px; }
+.road-actions .secondary-button { height: 32px; padding: 0 10px; font-size: 11px; }
+.road-region-label { display: block; margin-top: 14px; color: #505762; font-size: 11px; font-weight: 650; }
+#roadRegionsInput { width: 100%; min-height: 74px; margin-top: 7px; padding: 9px 11px; border: 1px solid #ccd1d9; border-radius: 8px; resize: vertical; color: var(--ink); font: 11px Consolas, monospace; }
+.road-gate-label { display: flex; align-items: center; gap: 7px; margin-top: 11px; color: #505762; font-size: 11px; font-weight: 650; }
 .composition-track { height: 7px; display: flex; overflow: hidden; border-radius: 99px; background: #e7e9ed; }
 .moving-segment { width: 25%; background: var(--accent); }
 .parked-segment { width: 75%; background: #cfd3da; }
@@ -251,6 +313,8 @@ button:disabled { cursor: not-allowed; opacity: .5; }
 .icon-link:hover { background: var(--accent-soft); }
 
 .primary-actions { display: grid; grid-template-columns: 1fr auto; gap: 9px; margin-top: 16px; }
+.road-start-help { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; margin-top: 9px; padding: 9px 10px; border: 1px solid #f2d6aa; border-radius: 8px; background: #fffaf2; color: #754a13; font-size: 11px; line-height: 1.4; }
+.road-start-help .text-button { flex: none; padding: 0; color: #754a13; font-size: 11px; text-decoration: underline; }
 .primary-button,
 .stop-button,
 .save-button,

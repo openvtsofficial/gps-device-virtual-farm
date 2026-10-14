@@ -13,7 +13,7 @@ class SimulatorController {
     this.running = false;
   }
 
-  async start(inputConfig) {
+  async start(inputConfig, roadContext = null) {
     if (this.worker) throw new Error('A simulation is already active');
     const config = validateConfig(inputConfig);
     const workerPath = path.join(__dirname, '..', 'simulator', 'worker.js');
@@ -23,7 +23,7 @@ class SimulatorController {
     this.worker.on('exit', (code) => this.#onWorkerExit(code));
 
     try {
-      const result = await this.#request('start', { config }, 30_000);
+      const result = await this.#request('start', { config, roadContext }, 30_000);
       this.running = true;
       return result;
     } catch (error) {

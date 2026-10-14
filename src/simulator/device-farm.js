@@ -6,6 +6,8 @@ const { validateConfig } = require('./config');
 const { DeviceSession, SessionState } = require('./device-session');
 const { generateImei, movingDeviceCount } = require('./imei');
 const { MinHeap } = require('./min-heap');
+const { allocateRoadFleet } = require('./road-allocator');
+const { RoadMovementModel } = require('./road-movement');
 
 const MAX_ACTIONS_PER_PUMP = 5_000;
 const MAX_PUMP_DELAY_MS = 100;
@@ -15,6 +17,9 @@ class DeviceFarm extends EventEmitter {
     super();
     this.config = validateConfig(inputConfig);
     this.netModule = dependencies.netModule;
+    this.roadPacks = dependencies.roadPacks || [];
+    this.restoredRoadStates = dependencies.restoredRoadStates || null;
+    this.roadAllocationSummary = null;
     this.now = dependencies.now || Date.now;
     this.running = false;
     this.status = 'idle';
@@ -31,15 +36,34 @@ class DeviceFarm extends EventEmitter {
     this.stateCounts = Object.fromEntries(Object.values(SessionState).map((state) => [state, 0]));
   }
 
-  start() {
+  start({ deferPump = false } = {}) {
     if (this.running) return this.snapshot();
+    const movingCount = movingDeviceCount(this.config.deviceCount, this.config.movingPercent);
+    let roadAssignments = null;
+    let roadRoutes = null;
+    if (this.config.movementMode === 'real-road') {
+      if (this.roadPacks.length === 0) throw new Error('Verified road route packs are required');
+      const imeis = Array.from({ length: this.config.deviceCount }, (_, index) => generateImei(index));
+      const allocation = allocateRoadFleet({
+        packs: this.roadPacks,
+        imeis,
+        movingCount,
+        seed: this.config.scenarioSeed,
+        requireContinuousMotion: this.config.road.requireEnterpriseDiversityGate,
+        restoredAssignments: this.restoredRoadStates
+      });
+      roadAssignments = allocation.assignments;
+      this.roadAllocationSummary = allocation.summary;
+      roadRoutes = new Map(this.roadPacks.flatMap((pack) => pack.routes.map((route) => [
+        `${pack.digest}:${route.id}`, route
+      ])));
+    }
     this.running = true;
     this.status = 'starting';
     this.startedAt = this.now();
     this.lastSnapshotAt = this.startedAt;
     this.stoppedAt = 0;
 
-    const movingCount = movingDeviceCount(this.config.deviceCount, this.config.movingPercent);
     this.stats.totalDevices = this.config.deviceCount;
     this.stats.movingDevices = movingCount;
     this.stats.parkedDevices = this.config.deviceCount - movingCount;
@@ -64,6 +88,12 @@ class DeviceFarm extends EventEmitter {
         imei: generateImei(index),
         moving: index < movingCount,
         farm: this,
+        ...(roadAssignments ? { movementModel: new RoadMovementModel({
+          route: roadRoutes.get(`${roadAssignments[index].routePackDigest}:${roadAssignments[index].routeId}`),
+          assignment: roadAssignments[index],
+          ...(roadAssignments[index].schemaVersion === 1
+            ? { checkpoint: roadAssignments[index] } : {})
+        }) } : {}),
         ...(this.netModule ? { netModule: this.netModule } : {})
       });
       this.sessions[index] = session;
@@ -75,9 +105,15 @@ class DeviceFarm extends EventEmitter {
     this.emitLog('info', 'Farm', 'Transmission started', {
       connectionRatePerSecond: this.config.connectionRatePerSecond
     });
+    if (!deferPump) this.activate();
+    return this.snapshot();
+  }
+
+  activate() {
+    if (!this.running) throw new Error('Cannot activate a stopped farm');
+    if (this.pumpTimer || this.metricsTimer) return;
     this.#schedulePump(0);
     this.metricsTimer = setInterval(() => this.emit('metrics', this.snapshot()), this.config.metricsIntervalMs);
-    return this.snapshot();
   }
 
   async stop() {
@@ -160,6 +196,11 @@ class DeviceFarm extends EventEmitter {
     this.stats.errors += 1;
   }
 
+  checkpointStates() {
+    if (this.config.movementMode !== 'real-road') return [];
+    return this.sessions.map((session) => session.route.checkpoint());
+  }
+
   logDevice(session, level, message, details) {
     const important = level === 'error' || level === 'warn';
     const sampledImportant = important && (session.index < 10 || this.stats.errors % 100 === 0);
@@ -207,7 +248,11 @@ class DeviceFarm extends EventEmitter {
         ? 0
         : round1(this.stateCounts[SessionState.ONLINE] * 100 / this.stats.totalDevices),
       memoryRssBytes: memory.rss,
-      heapUsedBytes: memory.heapUsed
+      heapUsedBytes: memory.heapUsed,
+      ...(this.roadAllocationSummary ? {
+        roadRegions: this.roadAllocationSummary.regions.length,
+        roadRoutesUsed: this.roadAllocationSummary.regions.reduce((sum, region) => sum + region.routesUsed, 0)
+      } : {})
     };
   }
 

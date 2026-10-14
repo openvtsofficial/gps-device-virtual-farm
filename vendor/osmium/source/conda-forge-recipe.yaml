@@ -1,0 +1,64 @@
+schema_version: 1
+
+context:
+  version: "1.19.1"
+
+package:
+  name: osmium-tool
+  version: ${{ version }}
+
+source:
+  - url: https://github.com/osmcode/osmium-tool/archive/refs/tags/v${{ version }}.tar.gz
+    sha256: e629d2f3e500ffa5df6f1b1689161ab3dea3a82f66beec2b453a74b8d782f949
+
+build:
+  number: 0
+
+requirements:
+  build:
+    - ${{ compiler('cxx') }}
+    - ${{ stdlib("c") }}
+    - cmake
+    - ninja
+  host:
+    - libboost-devel
+    - expat
+    - lz4-c
+    - bzip2
+    - zlib
+    - nlohmann_json
+    - libosmium
+    - protozero
+  run:
+    - lz4-c
+    - bzip2
+    - libzlib
+
+tests:
+  - script:
+      - if: unix
+        then: test -f $PREFIX/bin/osmium
+      - if: win
+        then: if not exist %LIBRARY_PREFIX%\\bin\\osmium.exe exit 1
+      - osmium --help
+
+about:
+  license: GPL-3.0-only
+  license_file:
+    - LICENSE.txt
+  summary: Osmium Command Line Tool.
+  description: |
+    Osmium is a versatile command line tool for working with OpenStreetMap data.
+    It includes many useful functions for manipulating OSM data, e.g. get
+    information about an OSM file, show the differences between OSM files, convert
+    OSM files from one format into another, merge and apply change files to an OSM
+    file, create geographical extracts from OSM files, filter OSM files by tags,
+    and much more...
+  homepage: https://osmcode.org/osmium-tool/
+  repository: https://github.com/osmcode/osmium-tool
+  documentation: https://osmcode.org/osmium-tool/manual.html
+
+extra:
+  recipe-maintainers:
+    - OliverSchmitz
+    - travishathaway

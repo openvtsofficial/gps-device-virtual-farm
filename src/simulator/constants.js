@@ -2,7 +2,7 @@
 
 const DEFAULT_CONFIG = Object.freeze({
   host: '127.0.0.1',
-  port: 5023,
+  port: 7510,
   deviceCount: 100,
   baseLatitude: 28.6139,
   baseLongitude: 77.209,
@@ -17,7 +17,17 @@ const DEFAULT_CONFIG = Object.freeze({
   reconnectBaseMs: 1_000,
   reconnectMaxMs: 30_000,
   metricsIntervalMs: 1_000,
-  logDetail: 'summary'
+  logDetail: 'summary',
+  movementMode: 'synthetic',
+  scenarioSeed: 'default',
+  road: {
+    regionMode: 'single',
+    radiusKm: 50,
+    regions: [],
+    selectedRoutePackDigests: [],
+    requireEnterpriseDiversityGate: true,
+    offlineTravelPolicy: 'freeze'
+  }
 });
 
 const LIMITS = Object.freeze({

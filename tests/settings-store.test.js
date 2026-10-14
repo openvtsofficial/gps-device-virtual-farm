@@ -35,7 +35,7 @@ test('invalid persisted settings recover to safe defaults', async (t) => {
   const store = new SettingsStore(directory);
   const loaded = await store.load();
   assert.equal(loaded.host, '127.0.0.1');
-  assert.equal(loaded.port, 5023);
+  assert.equal(loaded.port, 7510);
   assert.equal(loaded.deviceCount, 100);
 });
 

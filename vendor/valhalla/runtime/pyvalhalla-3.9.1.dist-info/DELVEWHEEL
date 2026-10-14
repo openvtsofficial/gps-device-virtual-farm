@@ -1,0 +1,2 @@
+Version: 1.13.1
+Arguments: ['C:\\hostedtoolcache\\windows\\Python\\3.12.10\\x64\\Scripts\\delvewheel', 'repair', '--analyze-existing-exes', '--add-path', 'build/vcpkg_installed/x64-windows/bin', 'C:\\Users\\runneradmin\\AppData\\Local\\Temp\\cibw-run-jy7nrwvn\\cp312-win_amd64\\built_wheel\\pyvalhalla-3.9.1-cp312-abi3-win_amd64.whl', '-w', 'C:\\Users\\runneradmin\\AppData\\Local\\Temp\\cibw-run-jy7nrwvn\\cp312-win_amd64\\repaired_wheel']

@@ -23,22 +23,25 @@ test('uses at least 25 percent moving devices', () => {
   assert.equal(movingDeviceCount(20_000, 25), 5_000);
 });
 
-test('manifest contains unique protocol and behavior assignments', () => {
+test('manifest contains unique IMEIs and behavior assignments', () => {
   const manifest = generateManifest(20, 25);
   assert.equal(manifest.length, 20);
   assert.equal(new Set(manifest.map((device) => device.imei)).size, 20);
   assert.equal(manifest.filter((device) => device.behavior === 'MOVING').length, 5);
-  assert.ok(manifest.every((device) => device.protocol === 'GT06'));
+  assert.ok(manifest.every((device) => ['TRUCK', 'CAR', 'BUS'].includes(device.deviceType)));
+  assert.ok(manifest.every((device) => ['MOVING', 'PARKED'].includes(device.behavior)));
 });
 
 test('CSV and JSON exports contain the complete list', () => {
   const csv = manifestAsCsv(3, 25);
   assert.equal(csv.trim().split(/\r?\n/).length, 4);
-  assert.match(csv, /358988888800003,GT06,PARKED/);
+  assert.match(csv, /^vehicleName,imei,simNumber,deviceType,plateNumber,vin\r?\n/);
+  assert.match(csv, /Bus 3,358988888800003,9876543212,BUS,DL03CO0003,3FADP82633000002/);
 
   const json = JSON.parse(manifestAsJson(3, 25));
   assert.equal(json.deviceCount, 3);
   assert.equal(json.movingDevices, 1);
-  assert.equal(json.devices[2].imei, '358988888800003');
+  assert.equal(json.protocol, 'GT06');
+  assert.equal(json.vehicles[2].imei, '358988888800003');
 });
 

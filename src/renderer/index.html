@@ -85,10 +85,56 @@
             </div>
           </div>
 
+          <div id="roadInlineStatus" class="road-inline-status" role="status" aria-live="polite" hidden>
+            <span class="road-inline-dot" aria-hidden="true"></span>
+            <span id="roadInlineStatusText">Checking local roads…</span>
+            <button id="prepareRoadButton" class="text-button" type="button">Prepare road routes</button>
+          </div>
+
+          <section id="roadPreparationPanel" class="road-preparation-panel" aria-labelledby="roadPreparationTitle" hidden>
+            <div class="road-preparation-heading">
+              <div>
+                <span class="section-kicker">LOCAL ROAD LIBRARY</span>
+                <h3 id="roadPreparationTitle">Route preparation</h3>
+              </div>
+              <span id="roadPreparationBadge" class="road-preparation-badge">Not started</span>
+            </div>
+            <ol class="road-preparation-steps" aria-label="Preparation stages">
+              <li id="roadMapStep">Download map</li>
+              <li id="roadGraphStep">Build road graph</li>
+              <li id="roadRoutesStep">Verify routes</li>
+            </ol>
+            <p id="preparationProgress" class="road-preparation-detail" role="status" aria-live="polite">Choose a region, then build its local road library.</p>
+            <div id="roadStageProgress" class="road-stage-progress" hidden>
+              <div class="road-progress-label"><span id="roadStageProgressLabel">Downloading map</span><span id="roadStageProgressValue"></span></div>
+              <div id="roadStageTrack" class="road-progress-track" role="progressbar" aria-label="Current preparation stage"><span id="roadStageBar"></span></div>
+            </div>
+            <div class="road-target-progress">
+              <div class="road-progress-label"><strong>Optional library goal</strong><strong id="roadRouteCount">0 / 2,000</strong></div>
+              <div id="roadRouteTrack" class="road-progress-track" role="progressbar" aria-label="Verified routes" aria-valuemin="0" aria-valuemax="2000" aria-valuenow="0"><span id="roadRouteBar"></span></div>
+              <span id="roadRoutePercent" class="road-route-percent">0% of optional goal</span>
+            </div>
+            <p id="roadFleetReadiness" class="road-fleet-readiness" role="status" aria-live="polite">Routes can be used before the optional library goal when they support this fleet.</p>
+            <div class="road-preparation-metrics">
+              <div><span>Attempts this run</span><strong id="roadAttemptCount">0</strong></div>
+              <div><span>Verified this run</span><strong id="roadAcceptedCount">0</strong></div>
+              <div><span>Skipped this run</span><strong id="roadSkippedCount">0</strong></div>
+            </div>
+            <p id="roadPreparationSearch" class="road-preparation-search" hidden></p>
+            <p id="roadPreparationMix" class="road-preparation-mix" hidden></p>
+            <p id="roadPreparationEta" class="road-preparation-eta">Time remaining: estimating…</p>
+            <p id="roadPreparationAdvice" class="road-preparation-advice" hidden></p>
+            <div class="road-preparation-actions">
+              <button id="cancelPreparationButton" class="secondary-button" type="button" hidden>Pause and save</button>
+              <button id="useSavedRoutesButton" class="secondary-button" type="button" hidden>Pause and check saved routes</button>
+              <span id="roadPreparationSavedNote">Verified routes are saved locally and reused when you continue.</span>
+            </div>
+          </section>
+
           <div class="target-row">
             <div>
               <span class="target-label">TRANSMISSION TARGET</span>
-              <strong id="targetValue">127.0.0.1:5023</strong>
+              <strong id="targetValue">127.0.0.1:7510</strong>
             </div>
             <button id="editTargetButton" class="icon-link" type="button" aria-label="Edit target" title="Edit target">
               <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m14.5 5.5 4 4M4 20l3.5-.75L19 7.75 16.25 5 4.75 16.5 4 20Z"></path></svg>
@@ -104,6 +150,10 @@
               <span class="stop-square"></span>
               Stop
             </button>
+          </div>
+          <div id="roadStartHelp" class="road-start-help" hidden>
+            <span id="roadStartHelpText">Choose a verified route pack to start real-road transmission.</span>
+            <button id="openRoadSetupButton" class="text-button" type="button">Open road settings</button>
           </div>
 
           <div class="authorization-note">
@@ -217,7 +267,7 @@
             </label>
             <label>
               <span>GT06 TCP port</span>
-              <input id="portInput" type="number" min="1" max="65535" required>
+              <input id="portInput" type="number" min="1" max="65535" value="7510" required>
             </label>
           </div>
           <div class="form-divider"></div>
@@ -231,7 +281,39 @@
               <input id="longitudeInput" type="number" min="-180" max="180" step="0.000001" required>
             </label>
           </div>
-          <p class="form-help">Devices are distributed around this point and moving devices follow continuous synthetic routes.</p>
+          <p class="form-help">This point centers synthetic routes, or the single-region route library in real-road mode.</p>
+          <div class="form-divider"></div>
+          <div class="form-grid">
+            <label>
+              <span>Movement mode</span>
+              <select id="movementModeInput">
+                <option value="synthetic">Synthetic (default)</option>
+                <option value="real-road">Real roads from local route packs</option>
+              </select>
+            </label>
+            <label>
+              <span>Scenario seed</span>
+              <input id="scenarioSeedInput" type="text" maxlength="64" autocomplete="off" spellcheck="false" required>
+            </label>
+            <label>
+              <span>Road region radius (km)</span>
+              <input id="roadRadiusInput" type="number" min="2" max="350" step="1" required>
+            </label>
+          </div>
+          <label class="road-region-label" for="roadRegionsInput">Optional multiple regions (JSON array)</label>
+          <textarea id="roadRegionsInput" rows="3" spellcheck="false" placeholder='[{"id":"north","centerLatitude":28.7,"centerLongitude":77.2,"radiusKm":50,"fleetWeight":0.5}, ...]'></textarea>
+          <label class="road-gate-label"><input id="roadDiversityGateInput" type="checkbox" checked> Require route diversity and continuous motion for the configured fleet</label>
+          <p class="form-help">Leave blank for one region centered on the base coordinate. Multiple region weights must sum to 1. Road positions are played only from verified local geometry. Map data © <a href="https://www.openstreetmap.org/copyright">OpenStreetMap contributors</a>.</p>
+          <div id="roadMaintenanceDetails" hidden>
+            <div id="roadControls" class="road-controls">
+              <div class="road-heading"><strong>Route library</strong><span id="roadReadiness">No pack selected</span></div>
+              <p id="roadCoverage" class="field-hint">Checking local roads…</p>
+              <label class="field-label" for="routePackSelect">Prepared route packs</label>
+              <select id="routePackSelect" multiple size="3" aria-describedby="roadCoverage"></select>
+              <p id="roadSetupHelp" class="road-setup-help" role="status" aria-live="polite"></p>
+              <p id="roadSourceNote" class="field-hint"></p>
+            </div>
+          </div>
           <div class="form-divider"></div>
           <div class="form-grid">
             <label>

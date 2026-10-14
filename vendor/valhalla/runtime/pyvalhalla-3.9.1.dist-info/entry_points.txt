@@ -1,0 +1,12 @@
+[console_scripts]
+valhalla_build_config = valhalla.valhalla_build_config:main
+valhalla_build_elevation = valhalla.valhalla_build_elevation:main
+valhalla_build_extract = valhalla.valhalla_build_extract:main
+valhalla_service = valhalla._scripts:run
+valhalla_build_tiles = valhalla._scripts:run
+valhalla_build_admins = valhalla._scripts:run
+valhalla_add_predicted_traffic = valhalla._scripts:run
+valhalla_add_landmarks = valhalla._scripts:run
+valhalla_ingest_transit = valhalla._scripts:run
+valhalla_convert_transit = valhalla._scripts:run
+

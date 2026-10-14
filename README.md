@@ -16,12 +16,16 @@ The simulator is designed for tests ranging from a few devices to **20,000 concu
 - Persistent TCP connections, login ACK handling and reconnect backoff
 - TCP keepalive, `TCP_NODELAY`, connect timeout and login retry handling
 - Coherent synthetic loop routes; positions continue from the previous point
+- Opt-in real-road playback from validated, checksummed local route packs
+- Parked devices at least 50 metres apart on verified city roads, including after checkpoint resume
+- Deterministic route allocation, coverage preflight and durable road-position checkpoints
 - Fixed positions for parked devices
 - Live connection, packet, bandwidth and error metrics
 - Collapsible/maximizable terminal panel with bounded UI logs
 - Rotating JSON-lines log file
 - IMEI export in CSV or JSON format
 - JSON settings persistence; no database server is required
+- Windows Chromium caches stored separately from settings and route data
 - Isolated worker thread so network load cannot freeze the interface
 - Automated unit and local TCP integration tests
 
@@ -40,6 +44,16 @@ Run the complete verification suite:
 npm run verify
 ```
 
+## Real-road mode (opt-in)
+
+The default synthetic mode remains available. Real-road mode uses a separate preparation step to obtain car directions, validates and stores an immutable local route pack, then moves each IMEI along that cached geometry. The worker makes no routing HTTP requests while transmitting GT06 packets. Route assignments and last queued positions are checkpointed every 15 seconds and on clean stop. A crash can replay up to the last durable checkpoint; a GT06 location ACK is needed to know the precise last server-delivered position.
+
+Open **Settings** to choose **Real roads**, define one region from the base coordinate and radius or provide a JSON array of weighted regions, then save. Press **Download and prepare roads** on the main screen. The app finds a covering Geofabrik extract or a set of smaller adjacent extracts, downloads and verifies their OSM data, clips and merges them with bundled Osmium, builds a local Valhalla graph, and saves verified route packs. The first download for a new area requires internet and disk space; later preparation reuses local map data. There is no Docker, Python, Java or separate routing service to install or start. The default diversity gate requires enough distinct closed tours to keep the requested moving population in motion. Unchecking it permits reduced variety and trips that eventually park. Changing a selected pack or scenario seed starts a new road assignment.
+
+Preparation targets about 2,000 verified city and regional routes and saves them in reusable immutable packs. A first build can stop when at least 500 saved routes meet the configured fleet's road-capacity and diversity checks; the user can transmit from that partial library and add more routes later. The 2,000-route count is an expansion goal, not a transmission prerequisite. The screen shows the preparation stage, saved-route progress, attempt budget, and an estimated time once enough work has been measured. The estimate changes with local road coverage. When one set of candidate trips is exhausted, the app generates a new deterministic set; it remembers the planning round and rejected requests across restarts for the same region and road graph. Accepted routes are saved at least every 100 routes or about 30 seconds of accepted work, and on cancellation. Temporary local-router failures receive up to two retries within the attempt budget; deterministic rejections are skipped. After 500 attempts without a new verified route, the app moves to a fresh planning round; it stops only after three consecutive rounds make no progress. Repeating the same search does not restart it. City routes must include measured local-street distance; the 2,000-route goal depends on the OSM graph and active geometry capacity.
+
+The bundled engine is included in the Windows x64 installer. The app limits each source PBF to 8 GiB; large or unmapped regions without a smaller verified cover can still be unavailable. An oversized-source error identifies the selected download and its size. Public demo preparation is disabled in the normal app flow. Details are in [docs/ROAD-MODE.md](docs/ROAD-MODE.md). Map data and derived routes: © OpenStreetMap contributors.
+
 ## Building Installers
 
 ### Windows Installer
@@ -53,7 +67,7 @@ npm run dist:win
 ```
 
 The installer is created in `release/` as:
-- `GPS-Device-Farm-Setup-1.0.0.exe` - NSIS installer
+- `GPS-Device-Farm-Setup-1.1.4.exe` - NSIS installer
 
 To create an unpacked portable Windows build instead:
 
@@ -65,7 +79,7 @@ For a supplied portable ZIP, extract the entire folder first and then open `GPS 
 
 **Note:** Development builds are not certificate-signed. Windows SmartScreen may show "Publisher: Unknown". A commercial code-signing certificate should be configured before public distribution.
 
-### macOS Installer
+### macOS Archive
 
 To build the macOS installer (DMG), run on macOS:
 
@@ -74,8 +88,7 @@ npm install
 npm run dist:mac
 ```
 
-The installer is created in `release/` as:
-- `GPS-Device-Farm-Setup-1.0.0.dmg` - macOS disk image (supports Intel x64 and Apple Silicon arm64)
+The x64 ZIP archive is created in `release/` as `GPS-Device-Farm-Setup-1.1.4.zip`.
 
 **Note:** For distribution outside the App Store, you need an Apple Developer ID certificate to sign the app. Without signing, users will see Gatekeeper warnings.
 
@@ -89,12 +102,12 @@ npm run dist:linux
 ```
 
 This creates in `release/`:
-- `GPS-Device-Farm-Setup-1.0.0.deb` - Debian/Ubuntu package
-- `GPS-Device-Farm-Setup-1.0.0.AppImage` - Universal Linux AppImage
+- `GPS-Device-Farm-Setup-1.1.4.deb` - Debian/Ubuntu package
+- `GPS-Device-Farm-Setup-1.1.4.AppImage` - Universal Linux AppImage
 
 **Installation:**
-- **DEB (Ubuntu/Debian):** `sudo dpkg -i GPS-Device-Farm-Setup-1.0.0.deb`
-- **AppImage:** Make it executable: `chmod +x GPS-Device-Farm-Setup-1.0.0.AppImage` then run it
+- **DEB (Ubuntu/Debian):** `sudo dpkg -i GPS-Device-Farm-Setup-1.1.4.deb`
+- **AppImage:** Make it executable: `chmod +x GPS-Device-Farm-Setup-1.1.4.AppImage` then run it
 
 ### Build All Platforms
 

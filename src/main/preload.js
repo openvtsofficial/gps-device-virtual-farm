@@ -14,6 +14,10 @@ contextBridge.exposeInMainWorld('deviceFarm', Object.freeze({
   saveSettings: (settings) => ipcRenderer.invoke('settings:save', settings),
   start: (config) => ipcRenderer.invoke('simulator:start', config),
   stop: () => ipcRenderer.invoke('simulator:stop'),
+  getRoadCoverage: (options) => ipcRenderer.invoke('road:coverage', options),
+  prepareRoadRoutes: (options) => ipcRenderer.invoke('road:prepare', options),
+  cancelPreparation: () => ipcRenderer.invoke('road:cancel-preparation'),
+  selectRoutePack: (digests, options) => ipcRenderer.invoke('road:select-pack', digests, options),
   exportImeis: (options) => ipcRenderer.invoke('imei:export', options),
   showLogFile: () => ipcRenderer.invoke('logs:show'),
   getAppInfo: () => ipcRenderer.invoke('app:info'),
@@ -24,6 +28,7 @@ contextBridge.exposeInMainWorld('deviceFarm', Object.freeze({
   onMetrics: (callback) => subscribe('simulator:metrics', callback),
   onLog: (callback) => subscribe('simulator:log', callback),
   onState: (callback) => subscribe('simulator:state', callback),
+  onRoadPreparationProgress: (callback) => subscribe('road:preparation-progress', callback),
   onWindowMaximized: (callback) => subscribe('window:maximized', callback)
 }));
 
